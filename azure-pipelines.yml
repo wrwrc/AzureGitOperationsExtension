@@ -75,7 +75,7 @@ stages:
               connectTo: 'VsTeam'
               connectedServiceName: 'Visual Studio Marketplace' # Change to whatever you named the service connection
               fileType: 'vsix'
-              vsixFile: '/$(PublisherID).*.vsix'
+              vsixFile: '$(System.DefaultWorkingDirectory)/$(ArtifactName)/*.vsix'
               publisherId: '$(PublisherID)'
               extensionId: '$(ExtensionID)'
               extensionName: '$(ExtensionName)'
