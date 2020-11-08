@@ -1,0 +1,25 @@
+{
+  "name": "wrwrc-azure-git-operations-extension",
+  "version": "0.1.0",
+  "description": "Azure Git operations extension",
+  "private": true,
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "publish": "npm run build && tfx extension publish -r ./dist --manifest-globs ./vss-extension.json --output-path ./artifacts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "azure-devops-node-api": "^10.1.1",
+    "azure-pipelines-task-lib": "^2.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.6",
+    "@types/q": "^1.5.4",
+    "ts-loader": "^8.0.10",
+    "typescript": "^4.0.5",
+    "webpack": "^5.4.0",
+    "webpack-cli": "^4.2.0"
+  }
+}
