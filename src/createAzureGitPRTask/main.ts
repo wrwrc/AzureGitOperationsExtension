@@ -1,5 +1,6 @@
 import api = require('azure-devops-node-api');
 import ga = require('azure-devops-node-api/GitApi');
+import { IdentityRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
 import gi = require('azure-devops-node-api/interfaces/GitInterfaces');
 import tl = require('azure-pipelines-task-lib/task');
 
@@ -14,6 +15,7 @@ class createAzureGitPullRequest {
     private targetRefName: string | undefined;
     private isDraft: boolean;
     private description: string | undefined;
+    private reviewers: string | undefined;
     private setAutoComplete: boolean;
     private autoCompleteSetBy: string | undefined;
     private transitionWorkItems: boolean;
@@ -32,6 +34,7 @@ class createAzureGitPullRequest {
         this.isDraft = tl.getBoolInput('isDraft');
         this.shouldCreateMergeBranch = tl.getBoolInput('createMergeBranch');
         this.mergeBranchName = tl.getInput('mergeBranchName', this.shouldCreateMergeBranch);
+        this.reviewers = tl.getInput('reviewers');
         this.setAutoComplete = tl.getBoolInput('setAutoComplete');
         this.autoCompleteSetBy = tl.getInput('autoCompleteSetBy', this.setAutoComplete);
         this.bypassPolicy = tl.getBoolInput('byPassPolicy');
@@ -65,6 +68,20 @@ class createAzureGitPullRequest {
         }
 
         const pr = await gitApi.createPullRequest(gitPullRequestToCreate, this.repositoryId, this.projectId);
+
+        if (this.reviewers) {
+            this.reviewers = this.reviewers.trim();
+            if (this.reviewers) {
+                const reviewerIds: IdentityRef[] = [];
+                for (let reviewerId of this.reviewers.split('|')) {
+                    reviewerId = reviewerId.trim();
+                    if (reviewerId) {
+                        reviewerIds.push(<IdentityRef>{ id: reviewerId });
+                    }
+                }
+                await gitApi.createPullRequestReviewers(reviewerIds, this.repositoryId, pr.pullRequestId!, this.projectId);
+            }
+        }
 
         if (this.setAutoComplete) {
             await gitApi.updatePullRequest(

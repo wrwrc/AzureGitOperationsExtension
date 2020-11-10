@@ -57,6 +57,13 @@
             "required": false
         },
         {
+            "name": "reviewers",
+            "type": "string",
+            "label": "Reviewers",
+            "required": false,
+            "helpMarkDown": "Add reviewers by their ID, seperated with '|'"
+        },
+        {
             "name": "createMergeBranch",
             "type": "boolean",
             "label": "Create merge branch",
