@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "wrwrc-azure-git-operations-extension",
     "name": "Wrwrc Azure Git Operations",
-    "version": "0.1.3",
+    "version": "0.1.6",
     "publisher": "wrwrc",
     "targets": [
         {
@@ -24,13 +24,13 @@
     },
     "contributions": [
         {
-            "id": "createAzureGitPRTask",
+            "id": "CreateAzureGitPRTask",
             "type": "ms.vss-distributed-task.task",
             "targets": [
                 "ms.vss-distributed-task.tasks"
             ],
             "properties": {
-                "name": "createAzureGitPRTask"
+                "name": "CreateAzureGitPRTask"
             }
         }
     ]

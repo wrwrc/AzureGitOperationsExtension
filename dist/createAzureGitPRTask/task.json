@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
     "id": "ac53bf82-5b18-4a99-adbb-e3e91f95d9f8",
-    "name": "createAzureGitPRTask",
+    "name": "CreateAzureGitPRTask",
     "friendlyName": "Create Azure Git Pull Request Task",
     "description": "Create Azure Git pull request",
     "helpMarkDown": "",
@@ -10,7 +10,7 @@
     "version": {
         "Major": 0,
         "Minor": 1,
-        "Patch": 3
+        "Patch": 6
     },
     "instanceNameFormat": "Create pull request",
     "inputs": [
