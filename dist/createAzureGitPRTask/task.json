@@ -15,6 +15,13 @@
     "instanceNameFormat": "Create pull request",
     "inputs": [
         {
+            "name": "organization",
+            "type": "string",
+            "label": "Organization name",
+            "required": true,
+            "helpMarkDown": "The organization name."
+        },
+        {
             "name": "repositoryId",
             "type": "string",
             "label": "Repository ID",
@@ -61,7 +68,7 @@
             "type": "string",
             "label": "Reviewers",
             "required": false,
-            "helpMarkDown": "Add reviewers by their ID, seperated with '|'"
+            "helpMarkDown": "Set reviewers. Accepts group name and username, names are seperated with comma(`,`). For example: `Contributors,Lila Durham,Raymond Burke`."
         },
         {
             "name": "createMergeBranch",

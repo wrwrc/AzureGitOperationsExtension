@@ -3,8 +3,11 @@ import ga = require('azure-devops-node-api/GitApi');
 import { IdentityRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
 import gi = require('azure-devops-node-api/interfaces/GitInterfaces');
 import tl = require('azure-pipelines-task-lib/task');
+import { OrganizationalWebApi } from '../api/OrganizationalWebApi';
+import { IGraphApi } from '../api/GraphApi';
 
 class createAzureGitPullRequest {
+    private organization: string;
     private repositoryId: string;
     private projectId: string;
     private connection: azdev.WebApi;
@@ -24,8 +27,10 @@ class createAzureGitPullRequest {
     private bypassReason: string | undefined;
     private bypassPolicy: boolean;
     private mergeStrategy: gi.GitPullRequestMergeStrategy;
+    private accessToken: string;
 
     constructor() {
+        this.organization = tl.getInput('organization', true)!;
         this.repositoryId = tl.getInput('repositoryId', true)!;
         this.sourceRefName = tl.getInput('sourceRefName', true);
         this.targetRefName = tl.getInput('targetRefName', true);
@@ -45,10 +50,10 @@ class createAzureGitPullRequest {
         this.transitionWorkItems = tl.getBoolInput('transitionWorkItems');
 
         this.projectId = this.getRequiredEnv('SYSTEM_TEAMPROJECTID');
+        this.accessToken = this.getRequiredEnv("SYSTEM_ACCESSTOKEN");
 
-        const accessToken = this.getRequiredEnv("SYSTEM_ACCESSTOKEN");
         const baseUrl = this.getRequiredEnv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI");
-        this.connection = azdev.WebApi.createWithBearerToken(baseUrl, accessToken);
+        this.connection = azdev.WebApi.createWithBearerToken(baseUrl, this.accessToken);
     }
 
     public async execute() {
@@ -72,14 +77,8 @@ class createAzureGitPullRequest {
         if (this.reviewers) {
             this.reviewers = this.reviewers.trim();
             if (this.reviewers) {
-                const reviewerIds: IdentityRef[] = [];
-                for (let reviewerId of this.reviewers.split('|')) {
-                    reviewerId = reviewerId.trim();
-                    if (reviewerId) {
-                        reviewerIds.push(<IdentityRef>{ id: reviewerId });
-                    }
-                }
-                await git.createPullRequestReviewers(reviewerIds, this.repositoryId, pr.pullRequestId!, this.projectId);
+                const reviewerIdRefs: IdentityRef[] = await this.getReviewerIdentityRefs(this.reviewers.split(','));
+                await git.createPullRequestReviewers(reviewerIdRefs, this.repositoryId, pr.pullRequestId!, this.projectId);
             }
         }
 
@@ -140,6 +139,37 @@ class createAzureGitPullRequest {
             default:
                 throw new RangeError(`'${mergeStrategy}' is not a valid merge strategy`);
         }
+    }
+
+    private async getReviewerIdentityRefs(reviewerIds: string[]): Promise<IdentityRef[]> {
+        const orgConn = OrganizationalWebApi.createWithBearerToken(
+            `https://vssps.dev.azure.com/${this.organization}/`,
+            this.accessToken);
+        const graph: IGraphApi = await orgConn.getGraphApi();
+
+        const scope = await graph.getDescriptor(this.projectId);
+        const groups = await graph.getGroups(scope.value);
+
+        const users = await graph.getUsers();
+
+        const reviewerIdRefs: IdentityRef[] = [];
+        for (let reviewer of reviewerIds) {
+            reviewer = reviewer.trim();
+            if (reviewer) {
+                const group = groups.find(g => g.displayName === reviewer);
+                if (group) {
+                    reviewerIdRefs.push(<IdentityRef>{ id: group.originId });
+                    continue;
+                }
+                const user = users.find(u => u.displayName === reviewer);
+                if (user) {
+                    reviewerIdRefs.push(<IdentityRef>{ id: user.originId });
+                    continue;
+                }
+            }
+        }
+
+        return reviewerIdRefs;
     }
 }
 
