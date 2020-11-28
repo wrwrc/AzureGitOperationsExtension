@@ -156,12 +156,12 @@ class createAzureGitPullRequest {
             if (reviewer) {
                 const group = groups.find(g => g.displayName === reviewer);
                 if (group) {
-                    reviewerIdRefs.push(<IdentityRef>{ id: group.originId });
+                    reviewerIdRefs.push(<IdentityRef>{ descriptor: group.descriptor });
                     continue;
                 }
                 const user = users.find(u => u.displayName === reviewer);
                 if (user) {
-                    reviewerIdRefs.push(<IdentityRef>{ id: user.originId });
+                    reviewerIdRefs.push(<IdentityRef>{ descriptor: user.descriptor });
                     continue;
                 }
             }
@@ -176,7 +176,7 @@ class createAzureGitPullRequest {
         const users = await graph.getUsers();
         const user = users.find(u => u.displayName === autoCompletedBy);
 
-        return user ? <IdentityRef>{ id: user.originId } : undefined;
+        return user ? <IdentityRef>{ descriptor: user.descriptor } : undefined;
     }
 
     private getGraphApi(): Promise<IGraphApi> {

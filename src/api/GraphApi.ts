@@ -55,22 +55,35 @@ export class GraphApi extends basem.ClientApiBase implements IGraphApi {
 
         return new Promise<GraphInterfaces.GraphUser[]>(async (resolve, reject) => {
             try {
-                let verData: vsom.ClientVersioningData = await this.vsoClient.getVersioningData(
-                    "6.0-preview.1",
-                    "graph",
-                    "005e26ec-6b77-4e4f-a986-b3827bf241f5",
-                    undefined,
-                    queryValues);
+                let continuationToken: any;
+                let ret: GraphInterfaces.GraphUser[] = [];
 
-                let url: string = verData.requestUrl!;
-                let options: restm.IRequestOptions = this.createRequestOptions(
-                    'application/json',
-                    verData.apiVersion);
+                while(true) {
 
-                let res: restm.IRestResponse<GraphInterfaces.GraphUser[]>;
-                res = await this.rest.get<GraphInterfaces.GraphUser[]>(url, options);
+                    let verData: vsom.ClientVersioningData = await this.vsoClient.getVersioningData(
+                        "6.0-preview.1",
+                        "graph",
+                        "005e26ec-6b77-4e4f-a986-b3827bf241f5",
+                        undefined,
+                        queryValues);
 
-                let ret = this.formatResponse(res.result, GraphInterfaces.TypeInfo.GraphUser, true);
+                    let url: string = verData.requestUrl!;
+
+                    let options: restm.IRequestOptions = this.createRequestOptions(
+                        'application/json',
+                        verData.apiVersion);
+                    let res: restm.IRestResponse<GraphInterfaces.GraphUser[]>;
+                    res = await this.rest.get<GraphInterfaces.GraphUser[]>(url, options);
+
+                    ret = ret.concat(this.formatResponse(res.result, GraphInterfaces.TypeInfo.GraphUser, true));
+
+                    continuationToken = (<any>res.headers)['X-MS-ContinuationToken'];
+                    if (continuationToken) {
+                        queryValues.continuationToken = continuationToken;
+                    } else {
+                        break;
+                    }
+                }
 
                 resolve(ret);
             } catch (err) {
@@ -87,22 +100,34 @@ export class GraphApi extends basem.ClientApiBase implements IGraphApi {
 
         return new Promise<GraphInterfaces.GraphGroup[]>(async (resolve, reject) => {
             try {
-                let verData: vsom.ClientVersioningData = await this.vsoClient.getVersioningData(
-                    "6.0-preview.1",
-                    "graph",
-                    "ebbe6af8-0b91-4c13-8cf1-777c14858188",
-                    undefined,
-                    queryValues);
+                let continuationToken: any;
+                let ret: GraphInterfaces.GraphGroup[] = [];
 
-                let url: string = verData.requestUrl!;
-                let options: restm.IRequestOptions = this.createRequestOptions(
-                    'application/json',
-                    verData.apiVersion);
+                while (true) {
+                    let verData: vsom.ClientVersioningData = await this.vsoClient.getVersioningData(
+                        "6.0-preview.1",
+                        "graph",
+                        "ebbe6af8-0b91-4c13-8cf1-777c14858188",
+                        undefined,
+                        queryValues);
 
-                let res: restm.IRestResponse<GraphInterfaces.GraphGroup[]>;
-                res = await this.rest.get<GraphInterfaces.GraphGroup[]>(url, options);
+                    let url: string = verData.requestUrl!;
+                    let options: restm.IRequestOptions = this.createRequestOptions(
+                        'application/json',
+                        verData.apiVersion);
 
-                let ret = this.formatResponse(res.result, {}, true);
+                    let res: restm.IRestResponse<GraphInterfaces.GraphGroup[]>;
+                    res = await this.rest.get<GraphInterfaces.GraphGroup[]>(url, options);
+
+                    ret = ret.concat(this.formatResponse(res.result, {}, true));
+
+                    continuationToken = (<any>res.headers)['X-MS-ContinuationToken'];
+                    if (continuationToken) {
+                        queryValues.continuationToken = continuationToken;
+                    } else {
+                        break;
+                    }
+                }
 
                 resolve(ret);
             } catch (err) {
