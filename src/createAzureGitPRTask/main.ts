@@ -82,24 +82,25 @@ class createAzureGitPullRequest {
             }
         }
 
-        if (this.setAutoComplete) {
-            await git.updatePullRequest(
-                {
-                    autoCompleteSetBy: {
-                        id: this.autoCompleteSetBy
+        if (this.setAutoComplete && this.autoCompleteSetBy) {
+            const autoCompletedByIdRef = await this.getAutoCompletedByIdentityRef(this.autoCompleteSetBy);
+            if (autoCompletedByIdRef) {
+                await git.updatePullRequest(
+                    {
+                        autoCompleteSetBy: autoCompletedByIdRef,
+                        completionOptions: {
+                            bypassPolicy: this.bypassPolicy,
+                            bypassReason: this.bypassReason,
+                            deleteSourceBranch: this.deleteSourceBranch,
+                            mergeCommitMessage: this.mergeCommitMessage,
+                            mergeStrategy: this.mergeStrategy,
+                            transitionWorkItems: this.transitionWorkItems
+                        }
                     },
-                    completionOptions: {
-                        bypassPolicy: this.bypassPolicy,
-                        bypassReason: this.bypassReason,
-                        deleteSourceBranch: this.deleteSourceBranch,
-                        mergeCommitMessage: this.mergeCommitMessage,
-                        mergeStrategy: this.mergeStrategy,
-                        transitionWorkItems: this.transitionWorkItems
-                    }
-                },
-                this.repositoryId,
-                pr.pullRequestId!,
-                this.projectId);
+                    this.repositoryId,
+                    pr.pullRequestId!,
+                    this.projectId);
+            }
         }
     }
 
@@ -141,11 +142,8 @@ class createAzureGitPullRequest {
         }
     }
 
-    private async getReviewerIdentityRefs(reviewerIds: string[]): Promise<IdentityRef[]> {
-        const orgConn = OrganizationalWebApi.createWithBearerToken(
-            `https://vssps.dev.azure.com/${this.organization}/`,
-            this.accessToken);
-        const graph: IGraphApi = await orgConn.getGraphApi();
+    private async getReviewerIdentityRefs(reviewers: string[]): Promise<IdentityRef[]> {
+        const graph: IGraphApi = await this.getGraphApi();
 
         const scope = await graph.getDescriptor(this.projectId);
         const groups = await graph.getGroups(scope.value);
@@ -153,7 +151,7 @@ class createAzureGitPullRequest {
         const users = await graph.getUsers();
 
         const reviewerIdRefs: IdentityRef[] = [];
-        for (let reviewer of reviewerIds) {
+        for (let reviewer of reviewers) {
             reviewer = reviewer.trim();
             if (reviewer) {
                 const group = groups.find(g => g.displayName === reviewer);
@@ -170,6 +168,22 @@ class createAzureGitPullRequest {
         }
 
         return reviewerIdRefs;
+    }
+
+    private async getAutoCompletedByIdentityRef(autoCompletedBy: string): Promise<IdentityRef|undefined> {
+        const graph: IGraphApi = await this.getGraphApi();
+
+        const users = await graph.getUsers();
+        const user = users.find(u => u.displayName === autoCompletedBy);
+
+        return user ? <IdentityRef>{ id: user.originId } : undefined;
+    }
+
+    private getGraphApi(): Promise<IGraphApi> {
+        const orgConn = OrganizationalWebApi.createWithBearerToken(
+            `https://vssps.dev.azure.com/${this.organization}/`,
+            this.accessToken);
+        return orgConn.getGraphApi();
     }
 }
 
