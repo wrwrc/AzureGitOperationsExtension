@@ -171,12 +171,9 @@ class createAzureGitPullRequest {
   }
 
   private async getAutoCompletedByIdentityRef(autoCompletedBy: string): Promise<IdentityRef | undefined> {
-    const graph: IGraphApi = await this.getGraphApi();
-
-    const users = await graph.getUsers();
-    const user = users.find(u => u.displayName === autoCompletedBy);
-
-    return user ? <IdentityRef>{ descriptor: user.descriptor } : undefined;
+    const entitlement: IMemberEntitlementApi = await this.getMemberEntitlementApi();
+    const users = await entitlement.searchUserEntitlements(autoCompletedBy);
+    return (users && users.length > 0) ? <IdentityRef>{ id: users[0].id } : undefined;
   }
 
   private getGraphApi(): Promise<IGraphApi> {

@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "wrwrc-azure-git-operations-extension",
     "name": "Wrwrc Azure Git Operations",
-    "version": "0.1.13",
+    "version": "0.1.14",
     "publisher": "wrwrc",
     "targets": [
         {
