@@ -3,6 +3,7 @@ import VsoBaseInterfaces = require('azure-devops-node-api/interfaces/common/VsoB
 import lim = require("azure-devops-node-api/interfaces/LocationsInterfaces");
 import locationsm = require('azure-devops-node-api/LocationsApi');;
 import { IGraphApi, GraphApi } from './GraphApi';
+import { IMemberEntitlementApi, MemberEntitlementApi } from './MemberEntitlementApi';
 
 export class OrganizationalWebApi {
     private resourceAreas: lim.ResourceAreaInfo[] = [];
@@ -20,6 +21,12 @@ export class OrganizationalWebApi {
         serverUrl = await this._getResourceAreaUrl(serverUrl || this.connection.serverUrl, GraphApi.RESOURCE_AREA_ID);
         handlers = handlers || [this.connection.authHandler];
         return new GraphApi(serverUrl, handlers, this.connection.options);
+    }
+
+    public async getMemberEntitlementApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): Promise<IMemberEntitlementApi> {
+        serverUrl = await this._getResourceAreaUrl(serverUrl || this.connection.serverUrl, MemberEntitlementApi.RESOURCE_AREA_ID);
+        handlers = handlers || [this.connection.authHandler];
+        return new MemberEntitlementApi(serverUrl, handlers, this.connection.options);
     }
 
     private async _getResourceAreaUrl(serverUrl: string, resourceId: string): Promise<string> {
