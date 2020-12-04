@@ -145,10 +145,12 @@ class createAzureGitPullRequest {
 
   private async getReviewerIdentityRefs(reviewers: string[]): Promise<IdentityRef[]> {
     const graph: IGraphApi = await this.getGraphApi();
-    const entitlement: IMemberEntitlementApi = await this.getMemberEntitlementApi();
+    const me: IMemberEntitlementApi = await this.getMemberEntitlementApi();
 
     const scope = await graph.getDescriptor(this.projectId);
     const groups = await graph.getGroups(scope.value);
+
+    const users = await graph.getUsers();
 
     const reviewerIdRefs: IdentityRef[] = [];
     for (let reviewer of reviewers) {
@@ -159,10 +161,16 @@ class createAzureGitPullRequest {
           reviewerIdRefs.push(<IdentityRef>{ id: group.originId });
           continue;
         }
-        const users = await entitlement.searchUserEntitlements(reviewer);
-        if (users && users.length > 0) {
-          reviewerIdRefs.push(<IdentityRef>{ id: users[0].id });
-          continue;
+        const user = users.find(g => g.displayName === reviewer);
+        if (user) {
+          let userId = user.originId;
+          if (user.origin !== 'vsts') {
+            const entitlements = await me.searchUserEntitlements(reviewer);
+            if (entitlements && entitlements.length > 0) {
+              userId = entitlements[0].id;
+            }
+          }
+          reviewerIdRefs.push(<IdentityRef>{ id: userId });
         }
       }
     }
@@ -171,9 +179,21 @@ class createAzureGitPullRequest {
   }
 
   private async getAutoCompletedByIdentityRef(autoCompletedBy: string): Promise<IdentityRef | undefined> {
-    const entitlement: IMemberEntitlementApi = await this.getMemberEntitlementApi();
-    const users = await entitlement.searchUserEntitlements(autoCompletedBy);
-    return (users && users.length > 0) ? <IdentityRef>{ id: users[0].id } : undefined;
+    const graph: IGraphApi = await this.getGraphApi();
+    const users = await graph.getUsers();
+    const user = users.find(g => g.displayName === autoCompletedBy);
+    if (user) {
+      if (user.origin === 'vsts') {
+        return <IdentityRef>{ id: user.originId };
+      }
+
+      const me: IMemberEntitlementApi = await this.getMemberEntitlementApi();
+      const entitlements = await me.searchUserEntitlements(autoCompletedBy);
+      if (entitlements && entitlements.length > 0) {
+        return <IdentityRef>{ id: entitlements[0].id };
+      }
+    }
+    return undefined;
   }
 
   private getGraphApi(): Promise<IGraphApi> {
