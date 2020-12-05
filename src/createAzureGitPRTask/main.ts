@@ -1,11 +1,13 @@
 import azdev = require('azure-devops-node-api');
 import ga = require('azure-devops-node-api/GitApi');
 import { IdentityRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
+import { GraphUser } from 'azure-devops-node-api/interfaces/GraphInterfaces';
 import gi = require('azure-devops-node-api/interfaces/GitInterfaces');
 import tl = require('azure-pipelines-task-lib/task');
 import { OrganizationalWebApi } from '../api/OrganizationalWebApi';
 import { IGraphApi } from '../api/GraphApi';
 import { IMemberEntitlementApi } from '../api/MemberEntitlementApi';
+import { UserEntitlement } from '../api/interfaces/MemberEntitlementInterfaces';
 
 class createAzureGitPullRequest {
   private organization: string;
@@ -29,6 +31,12 @@ class createAzureGitPullRequest {
   private bypassPolicy: boolean;
   private mergeStrategy: gi.GitPullRequestMergeStrategy;
   private accessToken: string;
+
+  private readonly cache: {
+    users?: GraphUser[],
+    graph?: IGraphApi,
+    memberEntitlement?: IMemberEntitlementApi
+  } = {};
 
   constructor() {
     this.organization = tl.getInput('organization', true)!;
@@ -73,20 +81,22 @@ class createAzureGitPullRequest {
       gitPullRequestToCreate.sourceRefName = this.mergeBranchName;
     }
 
-    const pr = await git.createPullRequest(gitPullRequestToCreate, this.repositoryId, this.projectId);
+    let pr = await git.createPullRequest(gitPullRequestToCreate, this.repositoryId, this.projectId);
 
     if (this.reviewers) {
       this.reviewers = this.reviewers.trim();
       if (this.reviewers) {
         const reviewerIdRefs: IdentityRef[] = await this.getReviewerIdentityRefs(this.reviewers.split(','));
-        await git.createPullRequestReviewers(reviewerIdRefs, this.repositoryId, pr.pullRequestId!, this.projectId);
+        const setReviewers = await git.createPullRequestReviewers(reviewerIdRefs, this.repositoryId, pr.pullRequestId!, this.projectId);
+        const invalidReviewers = reviewerIdRefs.filter(o => !setReviewers.find(i => i.id === o.id));
+        tl.warning(`Invalid reviewers: "${invalidReviewers.map(x => x.displayName).filter(x => x).join('", "')}"`);
       }
     }
 
     if (this.setAutoComplete && this.autoCompleteSetBy) {
       const autoCompletedByIdRef = await this.getAutoCompletedByIdentityRef(this.autoCompleteSetBy);
       if (autoCompletedByIdRef) {
-        await git.updatePullRequest(
+        pr = await git.updatePullRequest(
           {
             autoCompleteSetBy: autoCompletedByIdRef,
             completionOptions: {
@@ -102,7 +112,13 @@ class createAzureGitPullRequest {
           pr.pullRequestId!,
           this.projectId);
       }
+      
+      if (!pr.autoCompleteSetBy) {
+        tl.warning(`Unable to set Auto-Completed due to invalid user identity.`)
+      }
     }
+
+    console.info(`Pull request created at ${pr.url}`);
   }
 
   private async createMergeBranch(gitApi: ga.IGitApi) {
@@ -139,18 +155,15 @@ class createAzureGitPullRequest {
       case 'rebaseMerge':
         return gi.GitPullRequestMergeStrategy.RebaseMerge;
       default:
-        throw new RangeError(`'${mergeStrategy}' is not a valid merge strategy`);
+        throw new RangeError(`"${mergeStrategy}" is not a valid merge strategy`);
     }
   }
 
   private async getReviewerIdentityRefs(reviewers: string[]): Promise<IdentityRef[]> {
     const graph: IGraphApi = await this.getGraphApi();
-    const me: IMemberEntitlementApi = await this.getMemberEntitlementApi();
 
     const scope = await graph.getDescriptor(this.projectId);
     const groups = await graph.getGroups(scope.value);
-
-    const users = await graph.getUsers();
 
     const reviewerIdRefs: IdentityRef[] = [];
     for (let reviewer of reviewers) {
@@ -158,56 +171,67 @@ class createAzureGitPullRequest {
       if (reviewer) {
         const group = groups.find(g => g.displayName === reviewer);
         if (group) {
-          reviewerIdRefs.push(<IdentityRef>{ id: group.originId });
+          reviewerIdRefs.push(<IdentityRef>{ id: group.originId, displayName: reviewer });
           continue;
         }
-        const user = users.find(g => g.displayName === reviewer);
-        if (user) {
-          let userId = user.originId;
-          if (user.origin !== 'vsts') {
-            const entitlements = await me.searchUserEntitlements(reviewer);
-            if (entitlements && entitlements.length > 0) {
-              userId = entitlements[0].id;
-            }
-          }
-          reviewerIdRefs.push(<IdentityRef>{ id: userId });
+        const userId = await this.getUserId(reviewer);
+        if (userId) {
+          reviewerIdRefs.push(userId);
         }
       }
+      tl.warning(`"${reviewer}" is not a valid group or user, or has no permission to access this project.`)
     }
 
     return reviewerIdRefs;
   }
 
-  private async getAutoCompletedByIdentityRef(autoCompletedBy: string): Promise<IdentityRef | undefined> {
-    const graph: IGraphApi = await this.getGraphApi();
-    const users = await graph.getUsers();
-    const user = users.find(g => g.displayName === autoCompletedBy);
+  private getAutoCompletedByIdentityRef(autoCompletedBy: string): Promise<IdentityRef | undefined> {
+    return this.getUserId(autoCompletedBy);
+  }
+
+  private async findUser(name: string): Promise<GraphUser | undefined> {
+    if (!this.cache.users) {
+      const graph = await this.getGraphApi();
+      this.cache.users = (await graph.getUsers()) || [];
+    }
+    return this.cache.users.find(g => g.displayName === name);
+  }
+
+  private async findEntitlements(username: string): Promise<UserEntitlement[]> {
+    const me: IMemberEntitlementApi = await this.getMemberEntitlementApi();
+    const entitlements = await me.searchUserEntitlements(username);
+    return entitlements.filter(item => item.user.displayName === username);
+  }
+
+  private async getUserId(username: string): Promise<IdentityRef | undefined> {
+    const user = await this.findUser(username);
     if (user) {
       if (user.origin === 'vsts') {
-        return <IdentityRef>{ id: user.originId };
+        return <IdentityRef>{ id: user.originId, displayName: username };
       }
 
-      const me: IMemberEntitlementApi = await this.getMemberEntitlementApi();
-      const entitlements = await me.searchUserEntitlements(autoCompletedBy);
-      if (entitlements && entitlements.length > 0) {
-        return <IdentityRef>{ id: entitlements[0].id };
+      const entitlements = await this.findEntitlements(username);
+      if (entitlements.length > 0) {
+        return <IdentityRef>{ id: entitlements[0].id, displayName: username };
       }
     }
     return undefined;
   }
 
-  private getGraphApi(): Promise<IGraphApi> {
-    const orgConn = OrganizationalWebApi.createWithBearerToken(
-      `https://vssps.dev.azure.com/${this.organization}/`,
-      this.accessToken);
-    return orgConn.getGraphApi();
+  private async getGraphApi(): Promise<IGraphApi> {
+    if (!this.cache.graph) {
+      const orgConn = new OrganizationalWebApi(this.connection);
+      this.cache.graph = await orgConn.getGraphApi(`https://vssps.dev.azure.com/${this.organization}/`);
+    }
+    return this.cache.graph;
   }
 
-  private getMemberEntitlementApi(): Promise<IMemberEntitlementApi> {
-    const orgConn = OrganizationalWebApi.createWithBearerToken(
-      `https://vsaex.dev.azure.com/${this.organization}/`,
-      this.accessToken);
-    return orgConn.getMemberEntitlementApi();
+  private async getMemberEntitlementApi(): Promise<IMemberEntitlementApi> {
+    if (!this.cache.memberEntitlement) {
+      const orgConn = new OrganizationalWebApi(this.connection);
+      this.cache.memberEntitlement = await orgConn.getMemberEntitlementApi(`https://vsaex.dev.azure.com/${this.organization}/`);
+    }
+    return this.cache.memberEntitlement;
   }
 }
 
