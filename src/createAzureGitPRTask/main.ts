@@ -173,7 +173,7 @@ class createAzureGitPullRequest {
           reviewerIdRefs.push({ id: group.originId, displayName: reviewer });
           continue;
         }
-        const user = await this.getUserId(name, graph);
+        const user = await this.getUserId(reviewer, graph);
         if (user) {
           reviewerIdRefs.push(user);
         }
@@ -189,7 +189,7 @@ class createAzureGitPullRequest {
       this.cache.users = (await graph.getUsers()) || [];
     }
 
-    const user = this.cache.users.find(g => g.displayName === name);
+    const user = this.cache.users.find(g => g.displayName === username);
 
     if (!user) {
       return undefined;
