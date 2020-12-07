@@ -84,38 +84,48 @@ class createAzureGitPullRequest {
 
     const graph: IGraphApi = await this.getGraphApi();
 
+    tl.debug('Start setting reviewers...')
     if (this.reviewers) {
       this.reviewers = this.reviewers.trim();
       if (this.reviewers) {
-        const reviewerIdRefs: IdentityRef[] = await this.getReviewerIdentityRefs(this.reviewers.split(','), graph);
-        const setReviewers = await git.createPullRequestReviewers(reviewerIdRefs, this.repositoryId, pr.pullRequestId!, this.projectId);
-        const invalidReviewers = reviewerIdRefs.filter(o => !setReviewers.find(i => i.id === o.id));
-        tl.warning(`Invalid reviewers: "${invalidReviewers.map(x => x.displayName).filter(x => x).join('", "')}"`);
+        try {
+          const reviewerIdRefs: IdentityRef[] = await this.getReviewerIdentityRefs(this.reviewers.split(','), graph);
+          const setReviewers = await git.createPullRequestReviewers(reviewerIdRefs, this.repositoryId, pr.pullRequestId!, this.projectId);
+          const invalidReviewers = reviewerIdRefs.filter(o => !setReviewers.find(i => i.id === o.id));
+          tl.warning(`Unable to set reviewers: "${invalidReviewers.map(x => x.displayName).filter(x => x).join('", "')}"`);
+        } catch (error) {
+          tl.warning(error);
+        }
       }
     }
 
+    tl.debug('Start setting auto-complete...')
     if (this.setAutoComplete && this.autoCompleteSetBy) {
-      const autoCompletedByIdRef = await this.getUserId(this.autoCompleteSetBy, graph);
-      if (autoCompletedByIdRef) {
-        pr = await git.updatePullRequest(
-          {
-            autoCompleteSetBy: autoCompletedByIdRef,
-            completionOptions: {
-              bypassPolicy: this.bypassPolicy,
-              bypassReason: this.bypassReason,
-              deleteSourceBranch: this.deleteSourceBranch,
-              mergeCommitMessage: this.mergeCommitMessage,
-              mergeStrategy: this.mergeStrategy,
-              transitionWorkItems: this.transitionWorkItems
-            }
-          },
-          this.repositoryId,
-          pr.pullRequestId!,
-          this.projectId);
-      }
-      
-      if (!pr.autoCompleteSetBy) {
-        tl.warning(`Unable to set Auto-Completed due to invalid user identity.`)
+      try {
+        const autoCompletedByIdRef = await this.getUserId(this.autoCompleteSetBy, graph);
+        if (autoCompletedByIdRef) {
+          pr = await git.updatePullRequest(
+            {
+              autoCompleteSetBy: autoCompletedByIdRef,
+              completionOptions: {
+                bypassPolicy: this.bypassPolicy,
+                bypassReason: this.bypassReason,
+                deleteSourceBranch: this.deleteSourceBranch,
+                mergeCommitMessage: this.mergeCommitMessage,
+                mergeStrategy: this.mergeStrategy,
+                transitionWorkItems: this.transitionWorkItems
+              }
+            },
+            this.repositoryId,
+            pr.pullRequestId!,
+            this.projectId);
+        }
+        
+        if (!pr.autoCompleteSetBy) {
+          tl.warning(`Unable to set Auto-Completed due to invalid user identity.`)
+        }
+      } catch (error) {
+        tl.warning(error);
       }
     }
 
@@ -133,7 +143,7 @@ class createAzureGitPullRequest {
     };
     const refUpdateResult = await gitApi.updateRefs([refUpdateConfig], this.repositoryId, this.projectId);
     if (!refUpdateResult[0].success) {
-      throw new Error(`Failed to create ${this.mergeBranchName} branch`);
+      throw new Error(`Failed to create ${this.mergeBranchName} branch: ${JSON.stringify(refUpdateResult)}`);
     }
   }
 
