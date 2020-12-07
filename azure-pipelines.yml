@@ -35,6 +35,7 @@ stages:
               extensionId: '$(ExtensionID)'
               versionAction: 'Patch'
               #extensionVersionOverride: 'Extension.VersionOverride' # If the `$(Extension.VersionOverride)` is empty or undefined, it will search the marketplace.
+              outputVariable: 'Extension.Version'
           - task: PackageAzureDevOpsExtension@3
             inputs:
               rootFolder: '$(System.DefaultWorkingDirectory)/dist'
