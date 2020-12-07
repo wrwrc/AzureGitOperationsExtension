@@ -35,14 +35,14 @@ stages:
               extensionId: '$(ExtensionID)'
               versionAction: 'Patch'
               #extensionVersionOverride: 'Extension.VersionOverride' # If the `$(Extension.VersionOverride)` is empty or undefined, it will search the marketplace.
-              outputVariable: 'Extension.Version'
+              outputVariable: 'Task.Extension.Version'
           - task: PackageAzureDevOpsExtension@3
             inputs:
               rootFolder: '$(System.DefaultWorkingDirectory)/dist'
               publisherId: '$(PublisherID)'
               extensionId: '$(ExtensionID)'
               extensionName: '$(ExtensionName)'
-              extensionVersion: '$(Extension.Version)' # Set by QueryAzureDevOpsExtensionVersion task
+              extensionVersion: '$(Task.Extension.Version)' # Set by QueryAzureDevOpsExtensionVersion task
               updateTasksVersion: true
               extensionVisibility: 'private' # Change to public if you're publishing to the marketplace
               extensionPricing: 'free'
