@@ -34,14 +34,13 @@ stages:
               publisherId: '$(PublisherID)'
               extensionId: '$(ExtensionID)'
               versionAction: 'Patch'
-              outputVariable: 'Task.Extension.Version'
           - task: PackageAzureDevOpsExtension@3
             inputs:
               rootFolder: '$(System.DefaultWorkingDirectory)/dist'
               publisherId: '$(PublisherID)'
               extensionId: '$(ExtensionID)'
               extensionName: '$(ExtensionName)'
-              extensionVersion: '$(Task.Extension.Version)'
+              extensionVersion: '$(Task.Extension.VersionOverride)'
               updateTasksVersion: true
               updateTasksVersionType: 'patch'
               extensionVisibility: 'private' # Change to public if you're publishing to the marketplace
