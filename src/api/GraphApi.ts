@@ -8,6 +8,7 @@ export interface IGraphApi extends basem.ClientApiBase {
   getDescriptor(storageKey: string): Promise<GraphInterfaces.GraphDescriptorResult>;
   getUsers(scopeDescriptor?: string, subjectTypes?: string[]): Promise<GraphInterfaces.GraphUser[]>;
   getGroups(scopeDescriptor?: string, subjectTypes?: string[]): Promise<GraphInterfaces.GraphGroup[]>;
+  getStorageKey(subjectDescriptor: string): Promise<GraphInterfaces.GraphStorageKeyResult>;
 }
 
 export class GraphApi extends basem.ClientApiBase implements IGraphApi {
@@ -15,9 +16,9 @@ export class GraphApi extends basem.ClientApiBase implements IGraphApi {
     super(baseUrl, handlers, 'node-Graph-api', options);
   }
 
-  public static readonly RESOURCE_AREA_ID = "bb1e7ec9-e901-4b68-999a-de7012b920f8";
+  static readonly RESOURCE_AREA_ID = "bb1e7ec9-e901-4b68-999a-de7012b920f8";
 
-  public async getDescriptor(storageKey: string): Promise<GraphInterfaces.GraphDescriptorResult> {
+  getDescriptor(storageKey: string): Promise<GraphInterfaces.GraphDescriptorResult> {
     return new Promise<GraphInterfaces.GraphDescriptorResult>(async (resolve, reject) => {
       const routeValues: any = {
         storageKey: storageKey
@@ -47,7 +48,7 @@ export class GraphApi extends basem.ClientApiBase implements IGraphApi {
     });
   }
 
-  public async getUsers(scopeDescriptor?: string, subjectTypes?: string[]): Promise<GraphInterfaces.GraphUser[]> {
+  getUsers(scopeDescriptor?: string, subjectTypes?: string[]): Promise<GraphInterfaces.GraphUser[]> {
     let queryValues: any = {
       scopeDescriptor: scopeDescriptor,
       subjectTypes: subjectTypes?.join(',')
@@ -128,6 +129,36 @@ export class GraphApi extends basem.ClientApiBase implements IGraphApi {
             break;
           }
         }
+
+        resolve(ret);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  getStorageKey(subjectDescriptor: string): Promise<GraphInterfaces.GraphStorageKeyResult> {
+    return new Promise<GraphInterfaces.GraphStorageKeyResult>(async (resolve, reject) => {
+      const routeValues: any = {
+        subjectDescriptor: subjectDescriptor
+      };
+
+      try {
+        let verData: vsom.ClientVersioningData = await this.vsoClient.getVersioningData(
+          "6.0-preview.1",
+          "graph",
+          "eb85f8cc-f0f6-4264-a5b1-ffe2e4d4801f",
+          routeValues);
+
+        let url: string = verData.requestUrl!;
+        let options: restm.IRequestOptions = this.createRequestOptions(
+          'application/json',
+          verData.apiVersion);
+
+        let res: restm.IRestResponse<GraphInterfaces.GraphStorageKeyResult>;
+        res = await this.rest.get<GraphInterfaces.GraphStorageKeyResult>(url, options);
+
+        let ret = this.formatResponse(res.result, {}, true);
 
         resolve(ret);
       } catch (err) {
