@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
+  "id": "145010f6-1e4e-4a3a-bdc5-1cb16731df5a",
+  "name": "DeleteAzureGitTagTask",
+  "friendlyName": "Delete Azure Git Annotated Tag Task",
+  "description": "Delete Azure Git annotated tag",
+  "helpMarkDown": "",
+  "category": "Utility",
+  "author": "wrwrc",
+  "version": {
+    "Major": 0,
+    "Minor": 2,
+    "Patch": 0
+  },
+  "instanceNameFormat": "Delete annotated tag",
+  "inputs": [
+    {
+      "name": "organization",
+      "type": "string",
+      "label": "Organization name",
+      "required": true
+    },
+    {
+      "name": "projectId",
+      "type": "string",
+      "label": "Project ID",
+      "required": true
+    },
+    {
+      "name": "repositoryId",
+      "type": "string",
+      "label": "Repository ID",
+      "required": true
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "label": "Tag name",
+      "required": true
+    }
+  ],
+  "execution": {
+    "Node10": {
+      "target": "bundle.js"
+    }
+  }
+}

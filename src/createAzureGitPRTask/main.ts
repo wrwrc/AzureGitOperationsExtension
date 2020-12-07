@@ -40,6 +40,7 @@ class createAzureGitPullRequest {
 
   constructor() {
     this.organization = tl.getInput('organization', true)!;
+    this.projectId = tl.getInput('projectId', true)!;
     this.repositoryId = tl.getInput('repositoryId', true)!;
     this.sourceRefName = tl.getInput('sourceRefName', true);
     this.targetRefName = tl.getInput('targetRefName', true);
@@ -58,10 +59,9 @@ class createAzureGitPullRequest {
     this.mergeStrategy = this.parseGitPullRequestMergeStrategy(tl.getInput('mergeStrategy', true)!);
     this.transitionWorkItems = tl.getBoolInput('transitionWorkItems');
 
-    this.projectId = this.getRequiredEnv('SYSTEM_TEAMPROJECTID');
     this.accessToken = this.getRequiredEnv("SYSTEM_ACCESSTOKEN");
 
-    const baseUrl = this.getRequiredEnv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI");
+    const baseUrl = `https://dev.azure.com/${this.organization}/`;
     this.connection = azdev.WebApi.createWithBearerToken(baseUrl, this.accessToken);
   }
 

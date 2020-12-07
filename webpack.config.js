@@ -1,7 +1,11 @@
 const path = require('path');
 
 module.exports = {
-  entry: './src/createAzureGitPRTask/main.ts',
+  entry: {
+    createAzureGitPRTask: './src/createAzureGitPRTask/main.ts',
+    createAzureGitTagTask: './src/createAzureGitTagTask/main.ts',
+    deleteAzureGitTagTask: './src/deleteAzureGitTagTask/main.ts'
+  },
   target: 'node10',
   devtool: 'inline-source-map',
   module: {
@@ -17,7 +21,7 @@ module.exports = {
     extensions: ['.ts', '.js'],
   },
   output: {
-    filename: 'bundle.js',
-    path: path.resolve(__dirname, 'dist/createAzureGitPRTask'),
+    filename: '[name]/bundle.js',
+    path: path.resolve(__dirname, 'dist'),
   },
 };

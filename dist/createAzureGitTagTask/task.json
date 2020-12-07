@@ -1,0 +1,59 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
+  "id": "8965156d-bfe8-4cb0-a630-6a3e43948429",
+  "name": "CreateAzureGitTagTask",
+  "friendlyName": "Create Azure Git Annotated Tag Task",
+  "description": "Create Azure Git annotated tag",
+  "helpMarkDown": "",
+  "category": "Utility",
+  "author": "wrwrc",
+  "version": {
+    "Major": 0,
+    "Minor": 2,
+    "Patch": 0
+  },
+  "instanceNameFormat": "Create annotated tag",
+  "inputs": [
+    {
+      "name": "organization",
+      "type": "string",
+      "label": "Organization name",
+      "required": true
+    },
+    {
+      "name": "projectId",
+      "type": "string",
+      "label": "Project ID",
+      "required": true
+    },
+    {
+      "name": "repositoryId",
+      "type": "string",
+      "label": "Repository ID",
+      "required": true
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "label": "Tag name",
+      "required": true
+    },
+    {
+      "name": "commitId",
+      "type": "string",
+      "label": "Git Commit ID",
+      "required": true
+    },
+    {
+      "name": "message",
+      "type": "string",
+      "label": "Tag message",
+      "required": false
+    }
+  ],
+  "execution": {
+    "Node10": {
+      "target": "bundle.js"
+    }
+  }
+}

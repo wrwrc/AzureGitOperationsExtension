@@ -2,6 +2,8 @@
 
 Tasks:
 1. [Create Azure Git Pull Request](#CreateAzureGitPullRequest)
+2. [Create Azure Git Tag](#CreateAzureGitTag)
+3. [Delete Azure Git Tag](#DeleteAzureGitTag)
 
 ## Create Azure Git Pull Request
 
@@ -11,6 +13,7 @@ Tasks:
 - task: CreateAzureGitPRTask@0
   inputs:
     organization:
+    projectId:
     repositoryId:
     sourceRefName:
     targetRefName:
@@ -35,6 +38,7 @@ Tasks:
 | argument | description |
 |:---------|:------------|
 | `organization` | Specifies the organization name. It will be used to construct the base URL of the Azure DevOps API. |
+| `projectId` | Specifies the ID of the Azure DevOps project. You can get it from the predefined variable `$(System.TeamProjectId)`. |
 | `repositoryId` | Specifies the ID of the Azure Git Repo. You can get it from the predefined variable `$(Build.Repository.ID)`. |
 | `sourceRefName` | Specifies the source branch of the pull request. For example: `refs/heads/develop`. |
 | `targetRefName` | Specifies the target branch of the pull request. For example: `refs/heads/master`. |
@@ -53,3 +57,51 @@ Tasks:
 | `customizeMergeCommitMessage` | Use custom merge commit message. Only takes effect when `setAutoComplete` is `true`. |
 | `mergeCommitMessage` | The custom merge commit message. |
 | `transitionWorkItems` | If `true`, the state of the work items linked to the pull request will be updated when the pull request is completed. Only takes effect when `setAutoComplete` is `true`. |
+
+## Create Azure Git Tag
+
+### YAML snippet
+
+```yaml
+- task: CreateAzureGitTagTask@0
+  inputs:
+    organization:
+    projectId:
+    repositoryId:
+    name:
+    commitId:
+    #message: # Optional
+```
+
+### Arguments
+
+| argument | description |
+|:---------|:------------|
+| `organization` | Specifies the organization name. It will be used to construct the base URL of the Azure DevOps API. |
+| `projectId` | Specifies the ID of the Azure DevOps project. You can get it from the predefined variable `$(System.TeamProjectId)`. |
+| `repositoryId` | Specifies the ID of the Azure Git Repo. You can get it from the predefined variable `$(Build.Repository.ID)`. |
+| `name` | Specifies the tag name. |
+| `commitId` | Specifies the ID of the commit to be tagged. |
+| `message` | Specifies the tag message. |
+
+## Delete Azure Git Tag
+
+### YAML snippet
+
+```yaml
+- task: DeleteAzureGitTagTask@0
+  inputs:
+    organization:
+    projectId:
+    repositoryId:
+    name:
+```
+
+### Arguments
+
+| argument | description |
+|:---------|:------------|
+| `organization` | Specifies the organization name. It will be used to construct the base URL of the Azure DevOps API. |
+| `projectId` | Specifies the ID of the Azure DevOps project. You can get it from the predefined variable `$(System.TeamProjectId)`. |
+| `repositoryId` | Specifies the ID of the Azure Git Repo. You can get it from the predefined variable `$(Build.Repository.ID)`. |
+| `name` | Specifies the tag name. |

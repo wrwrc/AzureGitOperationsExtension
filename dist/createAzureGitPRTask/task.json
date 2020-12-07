@@ -1,168 +1,172 @@
 {
-    "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
-    "id": "ac53bf82-5b18-4a99-adbb-e3e91f95d9f8",
-    "name": "CreateAzureGitPRTask",
-    "friendlyName": "Create Azure Git Pull Request Task",
-    "description": "Create Azure Git pull request",
-    "helpMarkDown": "",
-    "category": "Utility",
-    "author": "wrwrc",
-    "version": {
-        "Major": 0,
-        "Minor": 1,
-        "Patch": 16
+  "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
+  "id": "ac53bf82-5b18-4a99-adbb-e3e91f95d9f8",
+  "name": "CreateAzureGitPRTask",
+  "friendlyName": "Create Azure Git Pull Request Task",
+  "description": "Create Azure Git pull request",
+  "helpMarkDown": "",
+  "category": "Utility",
+  "author": "wrwrc",
+  "version": {
+    "Major": 0,
+    "Minor": 2,
+    "Patch": 0
+  },
+  "instanceNameFormat": "Create pull request",
+  "inputs": [
+    {
+      "name": "organization",
+      "type": "string",
+      "label": "Organization name",
+      "required": true
     },
-    "instanceNameFormat": "Create pull request",
-    "inputs": [
-        {
-            "name": "organization",
-            "type": "string",
-            "label": "Organization name",
-            "required": true,
-            "helpMarkDown": "The organization name."
-        },
-        {
-            "name": "repositoryId",
-            "type": "string",
-            "label": "Repository ID",
-            "required": true,
-            "helpMarkDown": "The repository ID."
-        },
-        {
-            "name": "sourceRefName",
-            "type": "string",
-            "label": "Source branch",
-            "required": true,
-            "helpMarkDown": "The source branch of the pull request. For example: refs/heads/develop."
-        },
-        {
-            "name": "targetRefName",
-            "type": "string",
-            "label": "Target branch",
-            "required": true,
-            "helpMarkDown": "The target branch of the pull request. For example: refs/heads/master."
-        },
-        {
-            "name": "title",
-            "type": "string",
-            "label": "Title",
-            "required": false,
-            "helpMarkDown": "The title of the pull request."
-        },
-        {
-            "name": "description",
-            "type": "string",
-            "label": "Description",
-            "required": false,
-            "helpMarkDown": "The description of the pull request."
-        },
-        {
-            "name": "isDraft",
-            "type": "boolean",
-            "label": "Is draft",
-            "defaultValue": false,
-            "required": false
-        },
-        {
-            "name": "reviewers",
-            "type": "string",
-            "label": "Reviewers",
-            "required": false,
-            "helpMarkDown": "Set reviewers. Accepts group name and username, names are seperated with comma(`,`). For example: `Contributors,Lila Durham,Raymond Burke`."
-        },
-        {
-            "name": "createMergeBranch",
-            "type": "boolean",
-            "label": "Create merge branch",
-            "defaultValue": false,
-            "required": false
-        },
-        {
-            "name": "mergeBranchName",
-            "type": "string",
-            "label": "Merge branch name",
-            "required": false,
-            "visibleRule": "createMergeBranch == true",
-            "helpMarkDown": "Format: refs/heads/..."
-        },
-        {
-            "name": "setAutoComplete",
-            "type": "boolean",
-            "label": "Set Auto-complete",
-            "defaultValue": false,
-            "required": false
-        },
-        {
-            "name": "autoCompleteSetBy",
-            "type": "string",
-            "label": "Auto-complete Set by",
-            "required": false,
-            "visibleRule": "setAutoComplete == true"
-        },
-        {
-            "name": "byPassPolicy",
-            "type": "boolean",
-            "label": "Bypass policy",
-            "defaultValue": false,
-            "required": false,
-            "visibleRule": "setAutoComplete == true"
-        },
-        {
-            "name": "byPassReason",
-            "type": "string",
-            "label": "Bypass reason",
-            "required": false,
-            "visibleRule": "byPassPolicy == true"
-        },
-        {
-            "name": "mergeStrategy",
-            "type": "pickList",
-            "label": "Merge strategy",
-            "defaultValue": "noFastForward",
-            "required": false,
-            "options": {
-                "noFastForward": "No Fast-Forward",
-                "squash": "Squash",
-                "rebase": "Rebase",
-                "rebaseMerge": "Rebase Merge"
-            },
-            "visibleRule": "setAutoComplete == true"
-        },
-        {
-            "name": "deleteSourceBranch",
-            "type": "boolean",
-            "label": "Delete source branch",
-            "defaultValue": false,
-            "required": false,
-            "visibleRule": "setAutoComplete == true"
-        },
-        {
-            "name": "customizeMergeCommitMessage",
-            "type": "boolean",
-            "label": "Customize merge commit message",
-            "defaultValue": false,
-            "required": false,
-            "visibleRule": "setAutoComplete == true"
-        },
-        {
-            "name": "mergeCommitMessage",
-            "type": "string",
-            "label": "Merge commit message",
-            "required": false,
-            "visibleRule": "customizeMergeCommitMessage == true"
-        },
-        {
-            "name": "transitionWorkItems",
-            "type": "boolean",
-            "label": "Transition work items",
-            "defaultValue": false,
-            "required": false,
-            "visibleRule": "setAutoComplete == true"
-        }
-    ],
-    "execution": {
-        "Node10": {
-            "target": "bundle.js"
-        }
+    {
+      "name": "projectId",
+      "type": "string",
+      "label": "Project ID",
+      "required": true
+    },
+    {
+      "name": "repositoryId",
+      "type": "string",
+      "label": "Repository ID",
+      "required": true
+    },
+    {
+      "name": "sourceRefName",
+      "type": "string",
+      "label": "Source branch",
+      "required": true,
+      "helpMarkDown": "The source branch of the pull request. For example: refs/heads/develop."
+    },
+    {
+      "name": "targetRefName",
+      "type": "string",
+      "label": "Target branch",
+      "required": true,
+      "helpMarkDown": "The target branch of the pull request. For example: refs/heads/master."
+    },
+    {
+      "name": "title",
+      "type": "string",
+      "label": "Title",
+      "required": false,
+      "helpMarkDown": "The title of the pull request."
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "label": "Description",
+      "required": false,
+      "helpMarkDown": "The description of the pull request."
+    },
+    {
+      "name": "isDraft",
+      "type": "boolean",
+      "label": "Is draft",
+      "defaultValue": false,
+      "required": false
+    },
+    {
+      "name": "reviewers",
+      "type": "string",
+      "label": "Reviewers",
+      "required": false,
+      "helpMarkDown": "Set reviewers. Accepts group name and username, names are seperated with comma(`,`). For example: `Contributors,Lila Durham,Raymond Burke`."
+    },
+    {
+      "name": "createMergeBranch",
+      "type": "boolean",
+      "label": "Create merge branch",
+      "defaultValue": false,
+      "required": false
+    },
+    {
+      "name": "mergeBranchName",
+      "type": "string",
+      "label": "Merge branch name",
+      "required": false,
+      "visibleRule": "createMergeBranch == true",
+      "helpMarkDown": "Format: refs/heads/..."
+    },
+    {
+      "name": "setAutoComplete",
+      "type": "boolean",
+      "label": "Set Auto-complete",
+      "defaultValue": false,
+      "required": false
+    },
+    {
+      "name": "autoCompleteSetBy",
+      "type": "string",
+      "label": "Auto-complete Set by",
+      "required": false,
+      "visibleRule": "setAutoComplete == true"
+    },
+    {
+      "name": "byPassPolicy",
+      "type": "boolean",
+      "label": "Bypass policy",
+      "defaultValue": false,
+      "required": false,
+      "visibleRule": "setAutoComplete == true"
+    },
+    {
+      "name": "byPassReason",
+      "type": "string",
+      "label": "Bypass reason",
+      "required": false,
+      "visibleRule": "byPassPolicy == true"
+    },
+    {
+      "name": "mergeStrategy",
+      "type": "pickList",
+      "label": "Merge strategy",
+      "defaultValue": "noFastForward",
+      "required": false,
+      "options": {
+        "noFastForward": "No Fast-Forward",
+        "squash": "Squash",
+        "rebase": "Rebase",
+        "rebaseMerge": "Rebase Merge"
+      },
+      "visibleRule": "setAutoComplete == true"
+    },
+    {
+      "name": "deleteSourceBranch",
+      "type": "boolean",
+      "label": "Delete source branch",
+      "defaultValue": false,
+      "required": false,
+      "visibleRule": "setAutoComplete == true"
+    },
+    {
+      "name": "customizeMergeCommitMessage",
+      "type": "boolean",
+      "label": "Customize merge commit message",
+      "defaultValue": false,
+      "required": false,
+      "visibleRule": "setAutoComplete == true"
+    },
+    {
+      "name": "mergeCommitMessage",
+      "type": "string",
+      "label": "Merge commit message",
+      "required": false,
+      "visibleRule": "customizeMergeCommitMessage == true"
+    },
+    {
+      "name": "transitionWorkItems",
+      "type": "boolean",
+      "label": "Transition work items",
+      "defaultValue": false,
+      "required": false,
+      "visibleRule": "setAutoComplete == true"
     }
+  ],
+  "execution": {
+    "Node10": {
+      "target": "bundle.js"
+    }
+  }
 }
