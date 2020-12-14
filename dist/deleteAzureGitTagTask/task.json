@@ -21,12 +21,6 @@
       "required": true
     },
     {
-      "name": "projectId",
-      "type": "string",
-      "label": "Project ID",
-      "required": true
-    },
-    {
       "name": "repositoryId",
       "type": "string",
       "label": "Repository ID",

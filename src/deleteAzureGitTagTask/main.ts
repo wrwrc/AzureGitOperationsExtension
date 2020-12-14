@@ -3,13 +3,11 @@ import tl = require('azure-pipelines-task-lib/task');
 
 class deleteAzureGitTag {
   private readonly repositoryId: string;
-  private readonly projectId: string;
   private readonly connection: azdev.WebApi;
   private name: string;
 
   constructor() {
     this.name = tl.getInput('name', true)!;
-    this.projectId = tl.getInput('projectId', true)!;
     this.repositoryId = tl.getInput('repositoryId', true)!;
     const accessToken = this.getRequiredEnv("SYSTEM_ACCESSTOKEN");
     const organization = tl.getInput('organization', true)!;
@@ -19,7 +17,7 @@ class deleteAzureGitTag {
 
   async execute() {
     const git = await this.connection.getGitApi();
-    const refs = await git.getRefs(this.repositoryId, this.projectId, `tags/${this.name}`);
+    const refs = await git.getRefs(this.repositoryId, undefined, `tags/${this.name}`);
     const ref = refs.find(r => r.name === `refs/tags/${this.name}`);
     if (!ref) {
       throw new Error(`"${this.name}" doesn't exist.`);
@@ -30,9 +28,9 @@ class deleteAzureGitTag {
         oldObjectId: ref.objectId,
         newObjectId: "0000000000000000000000000000000000000000"
       }],
-      this.repositoryId,
-      this.projectId);
+      this.repositoryId);
     if (!result[0].success) {
+      console.debug(JSON.stringify(result, undefined, 2));
       throw new Error('Failed to create annotated tag.');
     }
   }

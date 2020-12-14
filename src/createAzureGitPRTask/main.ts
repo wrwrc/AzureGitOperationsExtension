@@ -10,8 +10,8 @@ import { IMemberEntitlementApi } from '../api/MemberEntitlementApi';
 
 class createAzureGitPullRequest {
   private organization: string;
-  private repositoryId: string;
   private projectId: string;
+  private repositoryId: string;
   private connection: azdev.WebApi;
   private shouldCreateMergeBranch: boolean;
   private mergeBranchName: string | undefined;
@@ -80,7 +80,7 @@ class createAzureGitPullRequest {
       gitPullRequestToCreate.sourceRefName = this.mergeBranchName;
     }
 
-    let pr = await git.createPullRequest(gitPullRequestToCreate, this.repositoryId, this.projectId);
+    let pr = await git.createPullRequest(gitPullRequestToCreate, this.repositoryId);
 
     const graph: IGraphApi = await this.getGraphApi();
 
@@ -90,11 +90,16 @@ class createAzureGitPullRequest {
       if (this.reviewers) {
         try {
           const reviewerIdRefs: IdentityRef[] = await this.getReviewerIdentityRefs(this.reviewers.split(','), graph);
-          const setReviewers = await git.createPullRequestReviewers(reviewerIdRefs, this.repositoryId, pr.pullRequestId!, this.projectId);
-          const invalidReviewers = reviewerIdRefs.filter(o => !setReviewers.find(i => i.id === o.id));
-          tl.warning(`Unable to set reviewers: "${invalidReviewers.map(x => x.displayName).filter(x => x).join('", "')}"`);
+
+          try {
+            const setReviewers = await git.createPullRequestReviewers(reviewerIdRefs, this.repositoryId, pr.pullRequestId!);
+            const invalidReviewers = reviewerIdRefs.filter(o => !setReviewers.find(i => i.id === o.id));
+            tl.warning(`Unable to set reviewers "${invalidReviewers.map(x => x.displayName).filter(x => x).join('", "')}"`);
+          } catch (error) {
+            tl.warning(`Failed to set reviewer\n${error.stack}`);
+          }
         } catch (error) {
-          tl.warning(error);
+          tl.warning(`Failed to get reviewer identities\n${error.stack}`);
         }
       }
     }
@@ -104,25 +109,28 @@ class createAzureGitPullRequest {
       try {
         const autoCompletedByIdRef = await this.getUserId(this.autoCompleteSetBy, graph);
         if (autoCompletedByIdRef) {
-          pr = await git.updatePullRequest(
-            {
-              autoCompleteSetBy: autoCompletedByIdRef,
-              completionOptions: {
-                bypassPolicy: this.bypassPolicy,
-                bypassReason: this.bypassReason,
-                deleteSourceBranch: this.deleteSourceBranch,
-                mergeCommitMessage: this.mergeCommitMessage,
-                mergeStrategy: this.mergeStrategy,
-                transitionWorkItems: this.transitionWorkItems
-              }
-            },
-            this.repositoryId,
-            pr.pullRequestId!,
-            this.projectId);
-        }
-        
-        if (!pr.autoCompleteSetBy) {
-          tl.warning(`Unable to set Auto-Completed due to invalid user identity.`)
+          try {
+            pr = await git.updatePullRequest(
+              {
+                autoCompleteSetBy: autoCompletedByIdRef,
+                completionOptions: {
+                  bypassPolicy: this.bypassPolicy,
+                  bypassReason: this.bypassReason,
+                  deleteSourceBranch: this.deleteSourceBranch,
+                  mergeCommitMessage: this.mergeCommitMessage,
+                  mergeStrategy: this.mergeStrategy,
+                  transitionWorkItems: this.transitionWorkItems
+                }
+              },
+              this.repositoryId,
+              pr.pullRequestId!);
+            
+            if (!pr.autoCompleteSetBy) {
+              tl.warning(`Failed to set Auto-Completed: invalid user identity.`)
+            }
+          } catch (error) {
+            tl.warning(`Failed to set Auto-Completed.\n${error.stack}`);
+          }
         }
       } catch (error) {
         tl.warning(error);
@@ -133,17 +141,23 @@ class createAzureGitPullRequest {
   }
 
   private async createMergeBranch(gitApi: ga.IGitApi) {
-    const refs = await gitApi.getRefs(this.repositoryId, this.projectId, this.sourceRefName!.replace('refs/', ''));
-    const newObjectId = refs[0].objectId;
-    tl.debug(`object ID of ${this.sourceRefName} branch = ${newObjectId}`);
+    const name = this.sourceRefName!.replace(/^refs\//, '');
+    const refs = await gitApi.getRefs(this.repositoryId, undefined, name);
+    const ref = refs.find(r => r.name === this.sourceRefName);
+    if (!ref) {
+      console.debug(JSON.stringify(refs, undefined, 2));
+      throw new Error('Invalid sourceRefName');
+    }
     const refUpdateConfig: gi.GitRefUpdate = {
       name: this.mergeBranchName,
       oldObjectId: '0000000000000000000000000000000000000000',
-      newObjectId: newObjectId
+      newObjectId: ref.objectId
     };
-    const refUpdateResult = await gitApi.updateRefs([refUpdateConfig], this.repositoryId, this.projectId);
-    if (!refUpdateResult[0].success) {
-      throw new Error(`Failed to create ${this.mergeBranchName} branch: ${JSON.stringify(refUpdateResult)}`);
+    const refUpdateResults = await gitApi.updateRefs([refUpdateConfig], this.repositoryId);
+    const refUpdateResult = refUpdateResults[0];
+    if (!refUpdateResult.success) {
+      console.debug(JSON.stringify(refUpdateResults, undefined, 2));
+      throw new Error(`Failed to create ${this.mergeBranchName} branch`);
     }
   }
 

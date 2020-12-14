@@ -1,6 +1,6 @@
 import azdev = require('azure-devops-node-api');
 import tl = require('azure-pipelines-task-lib/task');
-import { GitAnnotatedTag } from 'azure-devops-node-api/interfaces/GitInterfaces'; 
+import { GitAnnotatedTag, GitObjectType } from 'azure-devops-node-api/interfaces/GitInterfaces'; 
 
 class createAzureGitTag {
   private readonly repositoryId: string;
@@ -27,9 +27,10 @@ class createAzureGitTag {
     const tagObject: GitAnnotatedTag = {
       name: this.name,
       taggedObject: {
-        objectId: this.commitId
+        objectId: this.commitId,
+        objectType: GitObjectType.Commit
       },
-      message: this.message
+      message: this.message,
     };
     await git.createAnnotatedTag(tagObject, this.projectId, this.repositoryId);
   }
