@@ -1,12 +1,13 @@
 import azdev = require('azure-devops-node-api');
 import ga = require('azure-devops-node-api/GitApi');
-import { IdentityRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
-import { GraphUser } from 'azure-devops-node-api/interfaces/GraphInterfaces';
 import gi = require('azure-devops-node-api/interfaces/GitInterfaces');
 import tl = require('azure-pipelines-task-lib/task');
+import { IdentityRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
+import { GraphUser } from 'azure-devops-node-api/interfaces/GraphInterfaces';
 import { OrganizationalWebApi } from '../api/OrganizationalWebApi';
 import { IGraphApi } from '../api/GraphApi';
 import { IMemberEntitlementApi } from '../api/MemberEntitlementApi';
+import { getConnection } from '../api/common';
 
 class createAzureGitPullRequest {
   private organization: string;
@@ -29,7 +30,6 @@ class createAzureGitPullRequest {
   private bypassReason: string | undefined;
   private bypassPolicy: boolean;
   private mergeStrategy: gi.GitPullRequestMergeStrategy;
-  private accessToken: string;
 
   private readonly cache: {
     users?: GraphUser[],
@@ -57,11 +57,7 @@ class createAzureGitPullRequest {
     this.mergeCommitMessage = tl.getInput('mergeCommitMessage');
     this.mergeStrategy = this.parseGitPullRequestMergeStrategy(tl.getInput('mergeStrategy', true)!);
     this.transitionWorkItems = tl.getBoolInput('transitionWorkItems');
-
-    this.accessToken = this.getRequiredEnv("SYSTEM_ACCESSTOKEN");
-
-    const baseUrl = `https://dev.azure.com/${this.organization}/`;
-    this.connection = azdev.WebApi.createWithBearerToken(baseUrl, this.accessToken);
+    this.connection = getConnection(this.organization);
   }
 
   public async execute() {
@@ -159,14 +155,6 @@ class createAzureGitPullRequest {
       console.debug(JSON.stringify(refUpdateResults, undefined, 2));
       throw new Error(`Failed to create ${this.mergeBranchName} branch`);
     }
-  }
-
-  private getRequiredEnv(name: string): string {
-    let val = process.env[name];
-    if (!val) {
-      throw new ReferenceError(`Environment variable "${name}" is not set`);
-    }
-    return val;
   }
 
   private parseGitPullRequestMergeStrategy(mergeStrategy: string): gi.GitPullRequestMergeStrategy {

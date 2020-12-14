@@ -1,5 +1,6 @@
 import azdev = require('azure-devops-node-api');
 import tl = require('azure-pipelines-task-lib/task');
+import { getConnection } from '../api/common';
 
 class deleteAzureGitTag {
   private readonly repositoryId: string;
@@ -9,10 +10,8 @@ class deleteAzureGitTag {
   constructor() {
     this.name = tl.getInput('name', true)!;
     this.repositoryId = tl.getInput('repositoryId', true)!;
-    const accessToken = this.getRequiredEnv("SYSTEM_ACCESSTOKEN");
     const organization = tl.getInput('organization', true)!;
-    const baseUrl = `https://dev.azure.com/${organization}/`;
-    this.connection = azdev.WebApi.createWithBearerToken(baseUrl, accessToken);
+    this.connection = getConnection(organization);
   }
 
   async execute() {
@@ -33,14 +32,6 @@ class deleteAzureGitTag {
       console.debug(JSON.stringify(result, undefined, 2));
       throw new Error('Failed to create annotated tag.');
     }
-  }
-
-  private getRequiredEnv(name: string): string {
-    let val = process.env[name];
-    if (!val) {
-      throw new ReferenceError(`Environment variable "${name}" is not set`);
-    }
-    return val;
   }
 }
 

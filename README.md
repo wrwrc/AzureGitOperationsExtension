@@ -32,7 +32,8 @@ Tasks:
     #mergeCommitMessage: # Required when customizeMergeCommitMessage == true
     #transitionWorkItems: false # Optional
   env:
-    SYSTEM_ACCESSTOKEN:
+    #AZURE_DEVOPS_EXT_PAT: # Optional
+    #SYSTEM_ACCESSTOKEN: # Required when AZURE_DEVOPS_EXT_PAT is not provided
 ```
 
 ### Arguments
@@ -59,7 +60,8 @@ Tasks:
 | `customizeMergeCommitMessage` | Use custom merge commit message. Only takes effect when `setAutoComplete` is `true`. |
 | `mergeCommitMessage` | The custom merge commit message. |
 | `transitionWorkItems` | If `true`, the state of the work items linked to the pull request will be updated when the pull request is completed. Only takes effect when `setAutoComplete` is `true`. |
-| `SYSTEM_ACCESSTOKEN` | The access token used to call the Azure DevOps API. You can get it from the predefined variable `$(System.AccessToken)`. |
+| `AZURE_DEVOPS_EXT_PAT` | The personal access token used to call the Azure DevOps API. |
+| `SYSTEM_ACCESSTOKEN` | The access token used to call the Azure DevOps API when PAT is not provided. You can get it from the predefined variable `$(System.AccessToken)`. |
 
 ## Create Azure Git Tag
 
@@ -75,7 +77,8 @@ Tasks:
     commitId:
     #message: # Optional
   env:
-    SYSTEM_ACCESSTOKEN:
+    #AZURE_DEVOPS_EXT_PAT: # Optional
+    #SYSTEM_ACCESSTOKEN: # Required when AZURE_DEVOPS_EXT_PAT is not provided
 ```
 
 ### Arguments
@@ -88,7 +91,8 @@ Tasks:
 | `name` | Specifies the tag name. |
 | `commitId` | Specifies the ID of the commit to be tagged. |
 | `message` | Specifies the tag message. |
-| `SYSTEM_ACCESSTOKEN` | The access token used to call the Azure DevOps API. You can get it from the predefined variable `$(System.AccessToken)`. |
+| `AZURE_DEVOPS_EXT_PAT` | The personal access token used to call the Azure DevOps API. |
+| `SYSTEM_ACCESSTOKEN` | The access token used to call the Azure DevOps API when PAT is not provided. You can get it from the predefined variable `$(System.AccessToken)`. |
 
 ## Delete Azure Git Tag
 
@@ -98,11 +102,11 @@ Tasks:
 - task: DeleteAzureGitTagTask@0
   inputs:
     organization:
-    projectId:
     repositoryId:
     name:
   env:
-    SYSTEM_ACCESSTOKEN:
+    #AZURE_DEVOPS_EXT_PAT: # Optional
+    #SYSTEM_ACCESSTOKEN: # Required when AZURE_DEVOPS_EXT_PAT is not provided
 ```
 
 ### Arguments
@@ -113,4 +117,5 @@ Tasks:
 | `projectId` | Specifies the ID of the Azure DevOps project. You can get it from the predefined variable `$(System.TeamProjectId)`. |
 | `repositoryId` | Specifies the ID of the Azure Git Repo. You can get it from the predefined variable `$(Build.Repository.ID)`. |
 | `name` | Specifies the tag name. |
-| `SYSTEM_ACCESSTOKEN` | The access token used to call the Azure DevOps API. You can get it from the predefined variable `$(System.AccessToken)`. |
+| `AZURE_DEVOPS_EXT_PAT` | The personal access token used to call the Azure DevOps API. |
+| `SYSTEM_ACCESSTOKEN` | The access token used to call the Azure DevOps API when PAT is not provided. You can get it from the predefined variable `$(System.AccessToken)`. |

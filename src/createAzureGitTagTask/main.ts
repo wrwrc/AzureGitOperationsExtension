@@ -1,6 +1,7 @@
 import azdev = require('azure-devops-node-api');
 import tl = require('azure-pipelines-task-lib/task');
 import { GitAnnotatedTag, GitObjectType } from 'azure-devops-node-api/interfaces/GitInterfaces'; 
+import { getConnection } from '../api/common';
 
 class createAzureGitTag {
   private readonly repositoryId: string;
@@ -16,10 +17,8 @@ class createAzureGitTag {
     this.commitId = tl.getInput('commitId', true)!;
     this.projectId = tl.getInput('projectId', true)!;
     this.repositoryId = tl.getInput('repositoryId', true)!;
-    const accessToken = this.getRequiredEnv("SYSTEM_ACCESSTOKEN");
     const organization = tl.getInput('organization', true)!;
-    const baseUrl = `https://dev.azure.com/${organization}/`;
-    this.connection = azdev.WebApi.createWithBearerToken(baseUrl, accessToken);
+    this.connection = getConnection(organization);
   }
 
   async execute() {
@@ -33,14 +32,6 @@ class createAzureGitTag {
       message: this.message,
     };
     await git.createAnnotatedTag(tagObject, this.projectId, this.repositoryId);
-  }
-
-  private getRequiredEnv(name: string): string {
-    let val = process.env[name];
-    if (!val) {
-      throw new ReferenceError(`Environment variable "${name}" is not set`);
-    }
-    return val;
   }
 }
 
