@@ -1,6 +1,6 @@
 {
   "name": "wrwrc-azure-git-operations-extension",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Azure Git operations extension",
   "private": true,
   "scripts": {
@@ -11,15 +11,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "azure-devops-node-api": "^10.1.2",
-    "azure-pipelines-task-lib": "^2.11.3"
+    "azure-devops-node-api": "^10.2.2",
+    "azure-pipelines-task-lib": "^2.12.2"
   },
   "devDependencies": {
-    "@types/node": "^14.14.9",
-    "@types/q": "^1.5.4",
-    "ts-loader": "^8.0.11",
-    "typescript": "^4.1.2",
-    "webpack": "^5.6.0",
-    "webpack-cli": "^4.2.0"
+    "@types/node": "^14.18.3",
+    "@types/q": "^1.5.5",
+    "ts-loader": "^8.3.0",
+    "typescript": "^4.5.4",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1"
   }
 }
